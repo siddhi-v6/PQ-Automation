@@ -12,10 +12,11 @@ What it does
 
 How to use
 
-1. Open the link
-2. Upload your .xlsx PQ report
-3. Review flagged callouts and SPC analysis
-4. Notes
+1.Click on index.html (left sidebar)
+2. Click the Download raw file button (Top right)
+3. Find the downloaded file → double-click it
+4. Opens in your browser → Upload your .xlsx PQ report → done 
+5. Review flagged callouts and SPC analysis
 
 Works entirely in the browser — no data is sent to any server
 No installation or internet connection required after the page loads
