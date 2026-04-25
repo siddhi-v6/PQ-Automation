@@ -4,16 +4,18 @@ Browser-based tool to verify Process Qualification reports — upload an Excel f
 
 What it does
 
-Reads the Data Sheet tab from any PQ Excel report
-Flags out-of-range measurements — cells turn red where a part's value falls outside its USL/LSL tolerance, with a collapsible summary panel listing every failed callout and the exact parts that failed
-SPC Analysis — filters all SPC callouts and buckets them into three Cpk categories (capable / marginal / not capable)
-Box plots — one per SPC callout showing measurement spread, individual part values, and USL/LSL reference lines
+1. Reads the Data Sheet tab from any PQ Excel report
+2. Flags out-of-range measurements — cells turn red where a part's value falls outside its USL/LSL tolerance, with a collapsible summary panel       listing every failed callout and the exact parts that failed
+3. SPC Analysis — filters all SPC callouts and buckets them into three Cpk categories (capable / marginal / not capable)
+4. Box plots — one per SPC callout showing measurement spread, individual part values, and USL/LSL reference lines
+
+
 How to use
 
-Open the link
-Upload your .xlsx PQ report
-Review flagged callouts and SPC analysis
-Notes
+1. Open the link
+2. Upload your .xlsx PQ report
+3. Review flagged callouts and SPC analysis
+4. Notes
 
 Works entirely in the browser — no data is sent to any server
 No installation or internet connection required after the page loads
