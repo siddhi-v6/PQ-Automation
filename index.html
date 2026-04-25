@@ -677,24 +677,24 @@ function jumpToRow(balloon) {
   var row = document.querySelector('[data-balloon="' + balloon + '"]');
   if (!row) return;
 
-  var wrap = document.querySelector('.tbl-wrap');
-  if (wrap) {
-    // getBoundingClientRect gives positions relative to the viewport.
-    // Use the difference between the row's top and the wrap's top,
-    // then add the wrap's current scrollTop to get the absolute scroll target.
-    var wrapRect = wrap.getBoundingClientRect();
-    var rowRect  = row.getBoundingClientRect();
-    var targetScroll = wrap.scrollTop
-                     + (rowRect.top - wrapRect.top)
-                     - (wrap.clientHeight / 2)
-                     + (rowRect.height / 2);
-    wrap.scrollTo({ top: targetScroll, behavior: 'smooth' });
-  }
+  var wrap  = document.querySelector('.tbl-wrap');
+  var table = wrap && wrap.querySelector('table');
+  if (!wrap || !table) return;
 
-  // Bring the table area into view if it's off-screen
-  if (wrap) wrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  // Get positions relative to the viewport at this exact moment
+  var tableRect = table.getBoundingClientRect();
+  var rowRect   = row.getBoundingClientRect();
 
-  // Flash the row yellow — force reflow so it restarts if clicked twice
+  // rowRect.top - tableRect.top = visual gap right now (changes with scroll)
+  // Adding wrap.scrollTop converts that to an absolute offset inside the scrollable content
+  var rowOffsetInTable = (rowRect.top - tableRect.top) + wrap.scrollTop;
+
+  // Centre the row in the visible table area
+  var target = rowOffsetInTable - (wrap.clientHeight / 2) + (rowRect.height / 2);
+
+  wrap.scrollTo({ top: Math.max(0, target), behavior: 'smooth' });
+
+  // Flash yellow
   row.classList.remove('row-highlight');
   void row.offsetWidth;
   row.classList.add('row-highlight');
