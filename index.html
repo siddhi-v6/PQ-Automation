@@ -680,20 +680,21 @@ function jumpToRow(balloon) {
   var wrap = document.querySelector('.tbl-wrap');
   if (!wrap) return;
 
-  // Walk up the DOM from the row, accumulating offsetTop values,
-  // until we reach the tbl-wrap — giving the row's true position
-  // inside the scrollable container, independent of current scroll state.
-  var top = 0;
-  var el  = row;
-  while (el && el !== wrap) {
-    top += el.offsetTop;
-    el   = el.offsetParent;
+  // offsetParent chain skips non-positioned elements like tbl-wrap,
+  // so calculate absolute distance from body for BOTH, then subtract.
+  function distFromBody(el) {
+    var top = 0;
+    while (el) { top += el.offsetTop; el = el.offsetParent; }
+    return top;
   }
 
-  // Centre the row in the visible area
-  wrap.scrollTo({ top: Math.max(0, top - wrap.clientHeight / 2 + row.offsetHeight / 2), behavior: 'smooth' });
+  var rowInWrap = distFromBody(row) - distFromBody(wrap);
 
-  // Flash yellow
+  wrap.scrollTo({
+    top: Math.max(0, rowInWrap - wrap.clientHeight / 2 + row.offsetHeight / 2),
+    behavior: 'smooth'
+  });
+
   row.classList.remove('row-highlight');
   void row.offsetWidth;
   row.classList.add('row-highlight');
