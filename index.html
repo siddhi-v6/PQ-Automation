@@ -466,7 +466,7 @@ function loadFile(file) {
       if (!sheetName) {
         sheetName = wb.SheetNames.find(function(n) {
           var rows = XLSX.utils.sheet_to_json(wb.Sheets[n], { header:1, raw:true, defval:null });
-          for (var i = 0; i < Math.min(30, rows.length); i++) {
+          for (var i = 0; i < Math.min(60, rows.length); i++) {
             var lower = (rows[i] || []).map(function(c) { return c != null ? String(c).toLowerCase().trim() : ''; });
             if (lower.indexOf('balloon') !== -1 && lower.indexOf('usl') !== -1 && lower.indexOf('lsl') !== -1) return true;
           }
@@ -495,23 +495,29 @@ function loadFile(file) {
    PARSING
 ================================================================ */
 function parseSheet(raw, fileName) {
-  // 1. Find header row — case-insensitive match for Balloon, Category, USL, LSL
+  // 1. Find header row — case-insensitive, flexible match
+  //    Accepts "Balloon", "BALLOON", "Balloon #", "Callout" etc.
   var hIdx = -1;
-  for (var i = 0; i < Math.min(30, raw.length); i++) {
+  for (var i = 0; i < Math.min(60, raw.length); i++) {
     var rLow = (raw[i] || []).map(function(c) { return c != null ? String(c).toLowerCase().trim() : ''; });
-    if (rLow.indexOf('balloon') !== -1 && rLow.indexOf('category') !== -1 &&
-        rLow.indexOf('usl')     !== -1 && rLow.indexOf('lsl')      !== -1) {
-      hIdx = i; break;
-    }
+    var hasBalloon  = rLow.some(function(c) { return c === 'balloon' || c.indexOf('balloon') === 0 || c === 'callout'; });
+    var hasCategory = rLow.some(function(c) { return c === 'category' || c.indexOf('category') === 0; });
+    var hasUSL      = rLow.indexOf('usl') !== -1;
+    var hasLSL      = rLow.indexOf('lsl') !== -1;
+    if (hasBalloon && hasUSL && hasLSL) { hIdx = i; break; }
   }
   if (hIdx === -1) throw new Error('Cannot find header row (Balloon / Category / USL / LSL).');
 
-  // Build case-insensitive column map
+  // Build column map (original case) + helper that matches case-insensitively
   var headers = (raw[hIdx] || []).map(function(h) { return h != null ? String(h).trim() : ''; });
   var col = {};
-  headers.forEach(function(h, i) {
-    if (h) { col[h] = i; col[h.toLowerCase()] = i; }  // store both original and lowercase
-  });
+  headers.forEach(function(h, i) { if (h) col[h] = i; });
+  function gc(name) {
+    if (col[name] != null) return col[name];
+    var lo = name.toLowerCase();
+    for (var k in col) if (k.toLowerCase() === lo) return col[k];
+    return undefined;
+  }
 
   // 2. Find part-number row: a row with consecutive integers 1,2,3,4
   var pnRowIdx = -1;
@@ -558,18 +564,18 @@ function parseSheet(raw, fileName) {
   var rows = [], outCount = 0;
   for (var i = hIdx + 1; i < raw.length; i++) {
     var r    = raw[i] || [];
-    var ball = r[col['Balloon'] != null ? col['Balloon'] : col['balloon']];
+    var ball = r[gc('Balloon')];
     if (ball == null || ball === '') continue;
-    var usl = pNum(r[col['USL'] != null ? col['USL'] : col['usl']]);
-    var lsl = pNum(r[col['LSL'] != null ? col['LSL'] : col['lsl']]);
+    var usl = pNum(r[gc('USL')]);
+    var lsl = pNum(r[gc('LSL')]);
     if (usl === null || lsl === null) continue;
 
-    var category = String(r[col['Category'] != null ? col['Category'] : col['category']] || '').trim();
-    var cpk  = pNum(r[col['Cpk']  != null ? col['Cpk']  : col['cpk']]);
-    var ucpk = pNum(r[col['UCPK'] != null ? col['UCPK'] : col['ucpk']]);
-    var lcpk = pNum(r[col['LCPK'] != null ? col['LCPK'] : col['lcpk']]);
-    var mean = pNum(r[col['Mean'] != null ? col['Mean'] : col['mean']]);
-    var desc = String(r[col['Description'] != null ? col['Description'] : col['description']] || '');
+    var category = String(r[gc('Category')] || '').trim();
+    var cpk  = pNum(r[gc('Cpk')]);
+    var ucpk = pNum(r[gc('UCPK')]);
+    var lcpk = pNum(r[gc('LCPK')]);
+    var mean = pNum(r[gc('Mean')]);
+    var desc = String(r[gc('Description')] || '');
 
     var partVals = partColIdxs.map(function(ci) {
       var v = r[ci];
@@ -582,7 +588,7 @@ function parseSheet(raw, fileName) {
     rows.push({
       balloon: String(ball), category: category,
       description: desc,
-      nominal: pNum(r[col['Nominal']]),
+      nominal: pNum(r[gc('Nominal')]),
       usl: usl, lsl: lsl, cpk: cpk, ucpk: ucpk, lcpk: lcpk, mean: mean,
       partVals: partVals, oor: oor, anyOor: anyOor
     });
